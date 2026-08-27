@@ -1,0 +1,9 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/codedeploy/onix
+hooks:
+  ApplicationStart:
+    - location: applicationstart.sh
+      timeout: 100
