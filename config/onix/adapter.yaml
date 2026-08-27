@@ -16,7 +16,7 @@ http:
     idle: 30
 pluginManager:
   root: /app/plugins
-  remoteRoot: /mnt/gcs/plugins/plugins_bundle.zip
+#  remoteRoot: /mnt/gcs/plugins/plugins_bundle.zip
 modules:
   - name: bapTxnReciever
     path: /bap/reciever/
