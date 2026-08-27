@@ -106,6 +106,8 @@ modules:
             refreshInterval: "5m"
         signer:
           id: signer
+        signValidator:
+          id: signvalidator
         router:
           id: router
           config:
@@ -211,6 +213,8 @@ modules:
             refreshInterval: "5m"
         signer:
           id: signer
+        signValidator:
+          id: signvalidator
         router:
           id: router
           config:
