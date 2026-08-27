@@ -58,7 +58,7 @@ modules:
         router:
           id: router
           config:
-            routingConfigPath: /app/config/onix/bapTxnReciever-routing.yaml
+            routingConfig: /app/config/onix/bapTxnReciever-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -109,7 +109,7 @@ modules:
         router:
           id: router
           config:
-            routingConfigPath: /app/config/onix/bapTxnCaller-routing.yaml
+            routingConfig: /app/config/onix/bapTxnCaller-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -163,7 +163,7 @@ modules:
         router:
           id: router
           config:
-            routingConfigPath: /app/config/onix/bppTxnReciever-routing.yaml
+            routingConfig: /app/config/onix/bppTxnReciever-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -214,7 +214,7 @@ modules:
         router:
           id: router
           config:
-            routingConfigPath: /app/config/onix/bppTxnCaller-routing.yaml
+            routingConfig: /app/config/onix/bppTxnCaller-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
