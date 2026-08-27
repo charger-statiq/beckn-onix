@@ -16,7 +16,6 @@ http:
     idle: 30
 pluginManager:
   root: /app/plugins
-#  remoteRoot: /mnt/gcs/plugins/plugins_bundle.zip
 modules:
   - name: bapTxnReciever
     path: /bap/reciever/
@@ -37,35 +36,29 @@ modules:
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
-          id: secretskeymanager
+          id: simplekeymanager
           config:
-            projectID: ${projectID}
         cache:
-          id: redis
+          id: cache
           config:
-            addr: 10.81.192.4:6379
+            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
-            schemaDir: /mnt/gcs/configs/schemas
+            schemaDir: /app/config/onix/schemas
         checkPolicy:
           id: opapolicychecker
           config:
-            networkPolicyConfig: /mnt/gcs/configs/opa-network-policies.yaml
+            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
             refreshInterval: "5m"
         signValidator:
           id: signvalidator
         signer:
           id: signer
-        publisher:
-          id: publisher
-          config:
-            project: ${projectID}
-            topic: bapNetworkReciever
         router:
           id: router
           config:
-            routingConfigPath: /mnt/gcs/configs/bapTxnReciever-routing.yaml
+            routingConfigPath: /app/config/onix/bapTxnReciever-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -96,33 +89,27 @@ modules:
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
-          id: secretskeymanager
+          id: simplekeymanager
           config:
-            projectID: ${projectID}
         cache:
-          id: redis
+          id: cache
           config:
-            addr: 192.168.1.1:6379
+            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
-            schemaDir: /mnt/gcs/configs/schemas
+            schemaDir: /app/config/onix/schemas
         checkPolicy:
           id: opapolicychecker
           config:
-            networkPolicyConfig: /mnt/gcs/configs/opa-network-policies.yaml
+            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
             refreshInterval: "5m"
         signer:
           id: signer
-        publisher:
-          id: publisher
-          config:
-            project: ${projectID}
-            topic: bapNetworkReciever
         router:
           id: router
           config:
-            routingConfigPath: /mnt/gcs/configs/bapTxnCaller-routing.yaml
+            routingConfigPath: /app/config/onix/bapTxnCaller-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -154,35 +141,29 @@ modules:
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
-          id: secretskeymanager
+          id: simplekeymanager
           config:
-            projectID: ${projectID}
         cache:
-          id: redis
+          id: cache
           config:
-            addr: 192.168.1.1:6379
+            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
-            schemaDir: /mnt/gcs/configs/schemas
+            schemaDir: /app/config/onix/schemas
         checkPolicy:
           id: opapolicychecker
           config:
-            networkPolicyConfig: /mnt/gcs/configs/opa-network-policies.yaml
+            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
             refreshInterval: "5m"
         signValidator:
           id: signvalidator
         signer:
           id: signer
-        publisher:
-          id: publisher
-          config:
-            project: ${projectID}
-            topic: bapNetworkReciever
         router:
           id: router
           config:
-            routingConfigPath: /mnt/gcs/configs/bppTxnReciever-routing.yaml
+            routingConfigPath: /app/config/onix/bppTxnReciever-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
@@ -213,33 +194,27 @@ modules:
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
-          id: secretskeymanager
+          id: simplekeymanager
           config:
-            projectID: ${projectID}
         cache:
-          id: redis
+          id: cache
           config:
-            addr: 192.168.1.1:6379
+            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
-            schemaDir: /mnt/gcs/configs/schemas
+            schemaDir: /app/config/onix/schemas
         checkPolicy:
           id: opapolicychecker
           config:
-            networkPolicyConfig: /mnt/gcs/configs/opa-network-policies.yaml
+            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
             refreshInterval: "5m"
         signer:
           id: signer
-        publisher:
-          id: publisher
-          config:
-            project: ${projectID}
-            topic: bapNetworkReciever
         router:
           id: router
           config:
-            routingConfigPath: /mnt/gcs/configs/bppTxnCaller-routing.yaml
+            routingConfigPath: /app/config/onix/bppTxnCaller-routing.yaml
         middleware:
           - id: reqpreprocessor
             config:
