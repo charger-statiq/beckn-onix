@@ -2,7 +2,7 @@ FROM golang:1.26.1-bookworm AS builder
 
 WORKDIR /workspace/app
 
-# Specifically copy only the necessary files and directories
+# Copy only the necessary files and directories
 COPY cmd/adapter/ ./cmd/adapter/
 COPY core/ ./core/
 COPY pkg/ ./pkg/
@@ -21,32 +21,39 @@ ARG BUILD_DATE=unknown
 # Build main server
 RUN go build -ldflags "-X github.com/beckn-one/beckn-onix/pkg/version.Version=${ONIX_VERSION} -X github.com/beckn-one/beckn-onix/pkg/version.GitCommit=${GIT_COMMIT} -X github.com/beckn-one/beckn-onix/pkg/version.GitTreeState=${GIT_TREE_STATE} -X github.com/beckn-one/beckn-onix/pkg/version.BuildDate=${BUILD_DATE}" -o server cmd/adapter/main.go
 
-# Make the build script executable and run it to build plugins. The version
-# ARGs are passed through as environment variables so the otelsetup plugin
-# (a separate .so, a separate link unit from the server binary above) gets
-# the same build identity instead of falling back to pkg/version's
-# "dev"/"unknown" defaults.
+# Build the plugins into ./plugins
 RUN chmod +x install/build-plugins.sh && \
     ONIX_VERSION="${ONIX_VERSION}" GIT_COMMIT="${GIT_COMMIT}" GIT_TREE_STATE="${GIT_TREE_STATE}" BUILD_DATE="${BUILD_DATE}" \
     ./install/build-plugins.sh
 
-# Create minimal runtime image
+# Extract the JSON schemas bundle (schemas.zip is at the repo root, not in config/).
+# Strip macOS junk so only a clean schemas/ tree is copied into the runtime image.
+COPY schemas.zip .
+RUN apt-get update && apt-get install -y --no-install-recommends unzip \
+    && unzip -q schemas.zip -d /workspace/schemas_extracted \
+    && rm -rf /workspace/schemas_extracted/__MACOSX \
+    && find /workspace/schemas_extracted -name '.DS_Store' -delete
+
+# ---------- Runtime image ----------
 FROM cgr.dev/chainguard/wolfi-base:latest
 WORKDIR /app
 
-# Copy binary and plugins built with same Go version
+# Server binary + compiled plugins
 COPY --from=builder /workspace/app/server .
 COPY --from=builder /workspace/app/plugins ./plugins
 
-# ---- ADDED: bake the config into the image so CONFIG_FILE resolves ----
-# Without this the server crash-loops: it starts with `./server --config=${CONFIG_FILE}`
-# and that file must physically exist in the container.
-# This puts your config at /app/config/onix/adapter.yaml
-# (matches the CONFIG_FILE value in the k8s Secret).
+# Config (adapter.yaml, routing files, opa-network-policies.yaml) -> /app/config/onix/
 COPY config/ ./config/
-# ----------------------------------------------------------------------
 
-# CHANGED: 8081 -> 8080 to match http.port in config/onix/adapter.yaml
+# Extracted JSON schemas -> /app/config/onix/schemas  (schemaDir in adapter.yaml)
+COPY --from=builder /workspace/schemas_extracted/schemas ./config/onix/schemas
+
+# Example OPA policy at the exact path opa-network-policies.yaml references.
+# NOTE: example policy only -- replace with your real network policy for production.
+COPY pkg/plugin/implementation/opapolicychecker/testdata/example.rego \
+     /app/pkg/plugin/implementation/opapolicychecker/testdata/example.rego
+
+# Matches http.port in config/onix/adapter.yaml
 EXPOSE 8080
 
 CMD ["sh", "-c", "./server --config=${CONFIG_FILE}"]
