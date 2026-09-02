@@ -38,10 +38,6 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-        cache:
-          id: cache
-          config:
-            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
@@ -91,10 +87,6 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-        cache:
-          id: cache
-          config:
-            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
@@ -106,8 +98,6 @@ modules:
             refreshInterval: "5m"
         signer:
           id: signer
-        signValidator:
-          id: signvalidator
         router:
           id: router
           config:
@@ -145,10 +135,6 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-        cache:
-          id: cache
-          config:
-            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
@@ -198,10 +184,6 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-        cache:
-          id: cache
-          config:
-            addr: redis:6379
         schemaValidator:
           id: schemavalidator
           config:
@@ -213,8 +195,6 @@ modules:
             refreshInterval: "5m"
         signer:
           id: signer
-        signValidator:
-          id: signvalidator
         router:
           id: router
           config:
