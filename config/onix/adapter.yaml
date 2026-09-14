@@ -163,7 +163,10 @@ modules:
         - validateSign
         - checkPolicy
         - addRoute
-        - validateSchema
+        # DEV ONLY: schema validation disabled -- schemas.zip has no beckn.one:deg:ev-charging/2.0.0
+        # rulebook (NBSL, Q12), so every UBC message was NACKed SCH_INVALID_FORMAT. Re-enable the
+        # moment the per-action schema files land under config/onix/schemas.
+        # - validateSchema
         - signAck
   - name: bppTxnCaller
     path: /bpp/caller/
@@ -209,7 +212,10 @@ modules:
               contextKeys: transaction_id,message_id
               role: bpp
       steps:
-        - validateSchema
+        # DEV ONLY: schema validation disabled -- schemas.zip has no beckn.one:deg:ev-charging/2.0.0
+        # rulebook (NBSL, Q12), so every UBC message was NACKed SCH_INVALID_FORMAT. Re-enable the
+        # moment the per-action schema files land under config/onix/schemas.
+        # - validateSchema
         - checkPolicy
         - addRoute
         - sign
