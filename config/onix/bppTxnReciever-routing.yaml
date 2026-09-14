@@ -1,14 +1,30 @@
+# BPP Receiver routing -- INBOUND: BHIM/NBSL -> ONIX -> Hub-OCPI
+#
+# ONIX appends the action to the target url (excludeAction defaults to false),
+# so `select` on the rule below is delivered to:
+#     http://hub-ocpi.statiq-dev:5000/beckn/select
+# which is exactly what Hub-OCPI's beckn router registers.
+#
+# Only the actions Hub-OCPI actually handles are listed. `status`, `cancel`,
+# `rating` and `support` are deliberately absent -- those routes are not built
+# yet, so forwarding them would produce a 404 rather than a useful answer.
+# Add them here in the same change that adds the handlers.
+#
+# NOTE on `domain`: ONIX normalizes the domain to a wildcard for any v2.x rule
+# (router.go: isV2Version -> domain "*") and prints a warning if one is set, so
+# at version 2.0.0 routing keys on VERSION + ACTION only. The domain is therefore
+# omitted below deliberately -- it would be ignored and would log a warning on
+# every boot. Our domain is beckn.one:deg:ev-charging.
+
 routingRules:
-  - domain: "ONDC:TRV10"
-    version: "2.0.0"
+  - version: "2.0.0"
     targetType: "url"
     target:
-      url: "https://services-backend/trv/v1"
+      url: "http://hub-ocpi.statiq-dev:5000/beckn"
     endpoints:
       - select
       - init
       - confirm
-      - status
-      - cancel
-
-
+      - update
+      - track
+      - on_catalog_publish
