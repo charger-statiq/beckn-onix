@@ -1,4 +1,22 @@
-appName: "onix"
+appName: "bpp-ev-charging"
+
+plugins:
+  otelsetup:
+    id: otelsetup
+    config:
+      serviceName: "onix-adapter-bpp-dev"
+      serviceVersion: "1.0.0"
+      environment: "dev"
+      domain: "ev_charging"
+      otlpEndpoint: "localhost:4317"
+      enableMetrics: "false"
+      networkMetricsGranularity: "2min"
+      networkMetricsFrequency: "4min"
+      enableTracing: "false"
+      enableLogs: "false"
+      timeInterval: "5"
+      auditFieldsConfig: "/app/config/audit-fields.yaml"
+
 log:
   level: debug
   destinations:
@@ -8,119 +26,25 @@ log:
     - message_id
     - subscriber_id
     - module_id
+    - parent_id
+
 http:
   port: 8080
   timeout:
     read: 30
     write: 30
     idle: 30
+
 pluginManager:
   root: /app/plugins
+
 modules:
-  - name: bapTxnReciever
-    path: /bap/reciever/
-    handler:
-      type: std
-      role: bap
-      httpClientConfig:
-        maxIdleConns: 1000
-        maxIdleConnsPerHost: 200
-        idleConnTimeout: 300s
-        responseHeaderTimeout: 5s
-      plugins:
-        registry:
-          id: registry
-          config:
-            url: http://localhost:8080/reg
-            retry_max: 3
-            retry_wait_min: 100ms
-            retry_wait_max: 500ms
-        keyManager:
-          id: simplekeymanager
-          config:
-        schemaValidator:
-          id: schemavalidator
-          config:
-            schemaDir: /app/config/onix/schemas
-        checkPolicy:
-          id: opapolicychecker
-          config:
-            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
-            refreshInterval: "5m"
-        signValidator:
-          id: signvalidator
-        signer:
-          id: signer
-        router:
-          id: router
-          config:
-            routingConfig: /app/config/onix/bapTxnReciever-routing.yaml
-        middleware:
-          - id: reqpreprocessor
-            config:
-              contextKeys: transaction_id,message_id
-              role: bap
-      steps:
-        - validateSign
-        - checkPolicy
-        - addRoute
-        - validateSchema
-        - signAck
-  - name: bapTxnCaller
-    path: /bap/caller/
-    handler:
-      type: std
-      role: bap
-      httpClientConfig:
-        maxIdleConns: 1000
-        maxIdleConnsPerHost: 200
-        idleConnTimeout: 300s
-        responseHeaderTimeout: 5s
-      plugins:
-        registry:
-          id: registry
-          config:
-            url: http://localhost:8080/reg
-            retry_max: 3
-            retry_wait_min: 100ms
-            retry_wait_max: 500ms
-        keyManager:
-          id: simplekeymanager
-          config:
-        schemaValidator:
-          id: schemavalidator
-          config:
-            schemaDir: /app/config/onix/schemas
-        checkPolicy:
-          id: opapolicychecker
-          config:
-            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
-            refreshInterval: "5m"
-        signer:
-          id: signer
-        signValidator:
-          id: signvalidator
-        router:
-          id: router
-          config:
-            routingConfig: /app/config/onix/bapTxnCaller-routing.yaml
-        middleware:
-          - id: reqpreprocessor
-            config:
-              contextKeys: transaction_id,message_id
-              role: bap
-      steps:
-        - validateSchema
-        - checkPolicy
-        - addRoute
-        - sign
-        - validateAckSign
-  - name: bppTxnReciever
-    path: /bpp/reciever/
+  - name: bppTxnReceiver
+    path: /bpp/receiver/
     handler:
       type: std
       role: bpp
-      subscriberId: bpp1
+      subscriberId: cert-statiq.evlinq.in
       httpClientConfig:
         maxIdleConns: 1000
         maxIdleConnsPerHost: 200
@@ -128,28 +52,37 @@ modules:
         responseHeaderTimeout: 5s
       plugins:
         registry:
-          id: registry
+          id: dediregistry
           config:
-            url: http://localhost:8080/reg
+            url: https://fabric.nfh.global/registry/dedi
+            registryName: subscribers.beckn.one
+            allowedNetworkIDs: ubc.nbsl.org.in/NBSL_UAT_Reference_Registry
             retry_max: 3
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
           id: simplekeymanager
           config:
+            subscriberId: cert-statiq.evlinq.in
+            keyId: "76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX"
+            signingPrivateKey: "<SIGNING_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            signingPublicKey: "9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM="
+            encrPrivateKey: "<ENCR_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            encrPublicKey: "fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE="
+        # Core v2 schema from GitHub; UBC blocks validated via their @context URLs (bhim/ubc-tsd).
         schemaValidator:
-          id: schemavalidator
+          id: schemav2validator
           config:
-            schemaDir: /app/config/onix/schemas
-        checkPolicy:
-          id: opapolicychecker
-          config:
-            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
-            refreshInterval: "5m"
+            type: url
+            location: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/heads/core-v2.0.0-rc/api/beckn.yaml
+            cacheTTL: "3600"
+            extendedSchema_enabled: "true"
+            extendedSchema_cacheTTL: "3600"
+            extendedSchema_maxCacheSize: "100"
+            extendedSchema_downloadTimeout: "30"
+            extendedSchema_allowedDomains: "raw.githubusercontent.com"
         signValidator:
           id: signvalidator
-        signer:
-          id: signer
         router:
           id: router
           config:
@@ -157,19 +90,19 @@ modules:
         middleware:
           - id: reqpreprocessor
             config:
-              contextKeys: transaction_id,message_id
+              contextKeys: transaction_id,message_id,parent_id
               role: bpp
       steps:
         - validateSign
-        - checkPolicy
         - addRoute
         - validateSchema
-        - signAck
+
   - name: bppTxnCaller
     path: /bpp/caller/
     handler:
       type: std
       role: bpp
+      subscriberId: cert-statiq.evlinq.in
       httpClientConfig:
         maxIdleConns: 1000
         maxIdleConnsPerHost: 200
@@ -177,28 +110,37 @@ modules:
         responseHeaderTimeout: 5s
       plugins:
         registry:
-          id: registry
+          id: dediregistry
           config:
-            url: http://localhost:8080/reg
+            url: https://fabric.nfh.global/registry/dedi
+            registryName: subscribers.beckn.one
+            allowedNetworkIDs: ubc.nbsl.org.in/NBSL_UAT_Reference_Registry
             retry_max: 3
             retry_wait_min: 100ms
             retry_wait_max: 500ms
         keyManager:
           id: simplekeymanager
           config:
+            subscriberId: cert-statiq.evlinq.in
+            keyId: "76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX"
+            signingPrivateKey: "<SIGNING_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            signingPublicKey: "9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM="
+            encrPrivateKey: "<ENCR_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            encrPublicKey: "fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE="
+        # Core v2 schema from GitHub; UBC blocks validated via their @context URLs (bhim/ubc-tsd).
         schemaValidator:
-          id: schemavalidator
+          id: schemav2validator
           config:
-            schemaDir: /app/config/onix/schemas
-        checkPolicy:
-          id: opapolicychecker
-          config:
-            networkPolicyConfig: /app/config/onix/opa-network-policies.yaml
-            refreshInterval: "5m"
+            type: url
+            location: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/heads/core-v2.0.0-rc/api/beckn.yaml
+            cacheTTL: "3600"
+            extendedSchema_enabled: "true"
+            extendedSchema_cacheTTL: "3600"
+            extendedSchema_maxCacheSize: "100"
+            extendedSchema_downloadTimeout: "30"
+            extendedSchema_allowedDomains: "raw.githubusercontent.com"
         signer:
           id: signer
-        signValidator:
-          id: signvalidator
         router:
           id: router
           config:
@@ -206,11 +148,9 @@ modules:
         middleware:
           - id: reqpreprocessor
             config:
-              contextKeys: transaction_id,message_id
+              contextKeys: transaction_id,message_id,parent_id
               role: bpp
       steps:
         - validateSchema
-        - checkPolicy
         - addRoute
         - sign
-        - validateAckSign

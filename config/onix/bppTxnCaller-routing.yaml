@@ -6,11 +6,12 @@
 # `targetType: bap` means "read context.bap_uri from the body and send it there"
 # -- so every on_* reply goes back to whichever BAP opened the transaction.
 #
-# 🛑 catalog_publish is NOT a reply to a BAP. It is our catalogue being pushed to
-#    NBSL's CDS, so it needs its own `url` rule. The CDS endpoint has not been
-#    supplied by NBSL yet (Q3) -- the rule is left commented out rather than
-#    pointing somewhere wrong. Uncomment and fill in the url when it arrives,
-#    and set BECKN_CDS_PUBLISH_URL on the Hub-OCPI side in the same change.
+# catalog_publish is NOT a reply to a BAP. It is our catalogue pushed to NBSL's
+#    CDS, so it has its own `url` rule. The base url is the UAT CDS's own entry
+#    in the DeDi registry (uat-cds.ubc.nbsl.org.in); ONIX appends /catalog_publish
+#    to it (excludeAction false, as in NPCI's reference config). Confirm the
+#    exact path with NPCI before the first real push, and set
+#    BECKN_CDS_PUBLISH_URL on the Hub-OCPI side to {ONIX}/bpp/caller/catalog_publish.
 #
 # NOTE on `domain`: ONIX normalizes the domain to a wildcard for any v2.x rule
 # (router.go: isV2Version -> domain "*") and prints a warning if one is set, so
@@ -29,11 +30,10 @@ routingRules:
       - on_track
       - on_status
 
-  # - domain: "beckn.one:deg:ev-charging"
-  #   version: "2.0.0"
-  #   targetType: "url"
-  #   target:
-  #     url: "<NBSL CDS publish endpoint -- Q3, not yet supplied>"
-  #     excludeAction: true
-  #   endpoints:
-  #     - catalog_publish
+  - version: "2.0.0"
+    targetType: "url"
+    target:
+      url: "http://uat-cds.ubc.nbsl.org.in"
+      excludeAction: false
+    endpoints:
+      - catalog_publish
