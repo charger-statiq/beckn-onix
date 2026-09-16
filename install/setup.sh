@@ -144,7 +144,7 @@ if [ -f "go.mod" ]; then
         exit 1
     fi
 
-    go build -ldflags "${ONIX_LDFLAGS}" -o beckn-adapter cmd/adapter/main.go
+    go build -ldflags "${ONIX_LDFLAGS}" -o beckn-adapter ./cmd/adapter
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Adapter server built successfully${NC}"
     else
