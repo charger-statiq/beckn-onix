@@ -81,19 +81,25 @@ func main() {
 
 // initConfig loads and validates the configuration.
 func initConfig(ctx context.Context, path string) (*Config, error) {
-	// Open the configuration file.
-	file, err := os.Open(path)
+	// Read the configuration file.
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open config file: %w", err)
 	}
-	defer file.Close()
+
+	// Secrets Manager (SECRET_ID) first, then ${VAR} expansion, so private keys
+	// come from the environment and never from the file.
+	if err := loadSecretsIntoEnv(ctx); err != nil {
+		return nil, err
+	}
+	expanded := os.ExpandEnv(string(raw))
 
 	// Decode the YAML configuration.
 	var cfg Config
-	if err := yaml.NewDecoder(file).Decode(&cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(expanded), &cfg); err != nil {
 		return nil, fmt.Errorf("could not decode config: %w", err)
 	}
-	log.Debugf(ctx, "Read config: %#v", cfg)
+	// Not logged: the decoded config carries plugin secrets.
 	// Validate the configuration.
 	if err := validateConfig(&cfg); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)

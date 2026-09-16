@@ -18,7 +18,7 @@ plugins:
       auditFieldsConfig: "/app/config/audit-fields.yaml"
 
 log:
-  level: debug
+  level: info
   destinations:
     - type: stdout
   contextKeys:
@@ -65,9 +65,9 @@ modules:
           config:
             subscriberId: cert-statiq.evlinq.in
             keyId: "76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX"
-            signingPrivateKey: "<SIGNING_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            signingPrivateKey: "${ONIX_SIGNING_PRIVATE_KEY}"
             signingPublicKey: "9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM="
-            encrPrivateKey: "<ENCR_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            encrPrivateKey: "${ONIX_ENCR_PRIVATE_KEY}"
             encrPublicKey: "fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE="
         # Core v2 schema from GitHub; UBC blocks validated via their @context URLs (bhim/ubc-tsd).
         schemaValidator:
@@ -123,9 +123,9 @@ modules:
           config:
             subscriberId: cert-statiq.evlinq.in
             keyId: "76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX"
-            signingPrivateKey: "<SIGNING_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            signingPrivateKey: "${ONIX_SIGNING_PRIVATE_KEY}"
             signingPublicKey: "9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM="
-            encrPrivateKey: "<ENCR_PRIVATE_KEY: set in the k8s Secret, never in git>"
+            encrPrivateKey: "${ONIX_ENCR_PRIVATE_KEY}"
             encrPublicKey: "fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE="
         # Core v2 schema from GitHub; UBC blocks validated via their @context URLs (bhim/ubc-tsd).
         schemaValidator:

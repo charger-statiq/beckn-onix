@@ -18,6 +18,24 @@
 In August 2025, a completely new Beckn-ONIX adapter was made available. This version introduces a Plugin framework at it's core. 
 The ONIX Adapter previous to this release is archived to a separate branch, [main-pre-plugins](https://github.com/beckn/beckn-onix/tree/main-pre-plugins) for reference.
 
+## Secrets (this fork)
+
+`adapter.yaml` never holds private keys. The loader expands `${VAR}` references in
+the config file from the environment before parsing it, and, when `SECRET_ID` is
+set, first loads that AWS Secrets Manager JSON secret (region `AWS_REGION`, default
+`ap-south-1`) into the environment. Same contract as Hub-OCPI, Hub and OMT.
+
+Keys the shipped `config/onix/adapter.yaml` expects:
+
+| key | value |
+|---|---|
+| `ONIX_SIGNING_PRIVATE_KEY` | Ed25519 seed, raw 32 bytes, base64 |
+| `ONIX_ENCR_PRIVATE_KEY` | X25519 private key, raw 32 bytes, base64 |
+
+Either put them in the `SECRET_ID` secret, or set them directly as pod environment
+variables (a Kubernetes Secret via `envFrom`). Environment wins over the AWS secret.
+Without `SECRET_ID` the loader does nothing, so local runs need no AWS access.
+
 ## Overview
 
 Beckn-ONIX is an enterprise-grade middleware adapter system designed to facilitate seamless communication in any Beckn-enabled network. It acts as a protocol adapter between Beckn Application Platforms (BAPs - buyer applications) and Beckn Provider Platforms (BPPs - seller platforms), ensuring secure, validated, and compliant message exchange across various commerce networks.
