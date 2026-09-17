@@ -1,0 +1,26 @@
+# ONIX BPP Caller Routing -- OUTBOUND: Hub-OCPI -> ONIX -> BHIM / NBSL CDS
+# Same shape as NPCI's onix-adaptor/config/onix-bpp/bpp_caller_routing.yaml.
+# `targetType: bap` sends each reply to context.bap_uri from the message body.
+# catalog_publish is our catalogue pushed to the CDS, so it has its own url rule (path unconfirmed by NPCI).
+
+routingRules:
+  - domain: beckn.one:deg:ev-charging
+    version: "2.0.0"
+    targetType: bap
+    target: {}
+    endpoints:
+      - on_select
+      - on_init
+      - on_confirm
+      - on_status
+      - on_track
+      - on_update
+
+  - domain: beckn.one:deg:ev-charging
+    version: "2.0.0"
+    targetType: url
+    target:
+      url: __CDS_PUBLISH_BASE_URL__
+      excludeAction: false
+    endpoints:
+      - catalog_publish

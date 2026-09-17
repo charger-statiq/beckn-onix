@@ -1,0 +1,171 @@
+appName: "statiq-bpp-ev-charging"
+
+log:
+  level: debug
+  destinations:
+    - type: stdout
+  contextKeys:
+    - transaction_id
+    - message_id
+    - subscriber_id
+    - module_id
+    - parent_id
+
+http:
+  port: 8002
+  timeout:
+    read: 30
+    write: 30
+    idle: 30
+
+pluginManager:
+  root: /app/plugins
+
+# OpenTelemetry (OTLP) - metrics and traces sent to OTEL collector, then to Loki/backend
+plugins:
+  otelsetup:
+    id: otelsetup
+    config:
+      serviceName: "onix-ev-charging-bpp"
+      serviceVersion: "1.0.0"
+      environment: "development"
+      domain: "ev_charging"
+      otlpEndpoint: "otel-collector-bpp:4317"
+      enableMetrics: "true"
+      networkMetricsGranularity: "2min"
+      networkMetricsFrequency: "4min"
+      enableTracing: "true"
+      enableLogs: "true"
+      timeInterval: "5"
+      auditFieldsConfig: "/app/config/audit-fields.yaml"
+
+
+
+modules:
+  # BPP Receiver - Receives requests via HTTP and routes to backend via HTTP API
+  # Phase 1: Receives discover from CDS (HTTP) -> routes to mock-bpp (HTTP)
+  # Phase 2+: Receives other requests (select, init, confirm, etc.) from BAP-ONIX (HTTP) -> routes to mock-bpp (HTTP)
+  - name: bppTxnReceiver
+    path: /bpp/receiver/
+    handler:
+      type: std
+      role: bpp
+      subscriberId: cert-statiq.evlinq.in
+      httpClientConfig:
+        maxIdleConns: 1000
+        maxIdleConnsPerHost: 200
+        idleConnTimeout: 300s
+        responseHeaderTimeout: 5s
+      plugins:
+        registry:
+          id: dediregistry
+          config:
+            url: https://fabric.nfh.global/registry/dedi
+            registryName: subscribers.beckn.one
+            retry_max: 3
+            retry_wait_min: 100ms
+            retry_wait_max: 500ms
+        keyManager:
+          id: simplekeymanager
+          config:
+            networkParticipant: cert-statiq.evlinq.in
+            keyId: 76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX
+            signingPrivateKey: __ONIX_SIGNING_PRIVATE_KEY__
+            signingPublicKey: 9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM=
+            encrPrivateKey: __ONIX_ENCR_PRIVATE_KEY__
+            encrPublicKey: fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE=
+        cache:
+          id: cache
+          config:
+            addr: __REDIS_ADDR__
+        schemaValidator:
+          id: schemav2validator
+          config:
+            type: url
+            location: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/heads/core-v2.0.0-rc/api/beckn.yaml
+            cacheTTL: "3600"
+            extendedSchema_enabled: "true"
+            extendedSchema_cacheTTL: "3600"
+            extendedSchema_maxCacheSize: "100"
+            extendedSchema_downloadTimeout: "30"
+            extendedSchema_allowedDomains: "beckn.org,example.com,raw.githubusercontent.com"
+        signValidator:
+          id: signvalidator
+        router:
+          id: router
+          config:
+            routingConfig: /app/config/bpp_receiver_routing.yaml
+        middleware:
+          - id: reqpreprocessor
+            config:
+              contextKeys: transaction_id,message_id,parent_id
+              role: bpp
+      steps:
+        - validateSign
+        - addRoute
+        - validateSchema
+
+  # BPP Caller - Receives responses from backend via HTTP and sends HTTP
+  # Phase 1: Receives on_discover from mock-bpp (HTTP) -> sends HTTP to mock-cds
+  # Phase 2+: Receives other responses (on_select, on_init, etc.) from mock-bpp (HTTP) -> sends HTTP to BAP-ONIX plugin
+  - name: bppTxnCaller
+    path: /bpp/caller/
+    handler:
+      type: std
+      role: bpp
+      subscriberId: cert-statiq.evlinq.in
+      httpClientConfig:
+        maxIdleConns: 1000
+        maxIdleConnsPerHost: 200
+        idleConnTimeout: 300s
+        responseHeaderTimeout: 5s
+      plugins:
+        registry:
+          id: dediregistry
+          config:
+            url: https://fabric.nfh.global/registry/dedi
+            registryName: subscribers.beckn.one
+            retry_max: 3
+            retry_wait_min: 100ms
+            retry_wait_max: 500ms
+        keyManager:
+          id: simplekeymanager
+          config:
+            networkParticipant: cert-statiq.evlinq.in
+            keyId: 76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX
+            signingPrivateKey: __ONIX_SIGNING_PRIVATE_KEY__
+            signingPublicKey: 9qfP5CbO7qbrIiGpyCMse2uk7F/LAgrFrQw8AESupWM=
+            encrPrivateKey: __ONIX_ENCR_PRIVATE_KEY__
+            encrPublicKey: fnS4p9rcIoJ9d62ia4ZKKfm7TIa9BuVF6XVgcDZdVmE=
+        cache:
+          id: cache
+          config:
+            addr: __REDIS_ADDR__
+        schemaValidator:
+          id: schemav2validator
+          config:
+            type: url
+            location: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/heads/core-v2.0.0-rc/api/beckn.yaml
+            cacheTTL: "3600"
+            extendedSchema_enabled: "true"
+            extendedSchema_cacheTTL: "3600"
+            extendedSchema_maxCacheSize: "100"
+            extendedSchema_downloadTimeout: "30"
+            extendedSchema_allowedDomains: "beckn.org,example.com,raw.githubusercontent.com"
+        router:
+          id: router
+          config:
+            routingConfig: /app/config/bpp_caller_routing.yaml
+        signer:
+          id: signer
+        middleware:
+          - id: reqpreprocessor
+            config:
+              contextKeys: transaction_id,message_id,parent_id  
+              role: bpp
+      steps:
+        - validateSchema
+        - addRoute
+        - sign
+
+

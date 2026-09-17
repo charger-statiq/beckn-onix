@@ -1,0 +1,56 @@
+# ONIX BPP (NPCI's prebuilt image) for namespace statiq-dev.
+# Keeps the existing name and label (app: onix) so the existing NodePort service and the ALB keep routing.
+# Config comes from Secret onix-bpp-config, created from render-config.sh output (it holds the private keys).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onix
+  namespace: statiq-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: onix
+  template:
+    metadata:
+      labels:
+        app: onix
+    spec:
+      containers:
+        - name: onix
+          image: manendrapalsingh/onix-adapter:v0.9.5   # or the ECR mirror of this exact digest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+          env:
+            - name: CONFIG_FILE
+              value: /app/config/adapter.yaml
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: onix-redis
+                  key: password
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: "true"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: otel-collector-bpp:4317
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 20
+            periodSeconds: 30
+      volumes:
+        - name: config
+          secret:
+            secretName: onix-bpp-config
