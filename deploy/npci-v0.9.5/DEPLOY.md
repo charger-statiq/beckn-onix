@@ -61,6 +61,19 @@ Expected log lines: `DeDi Registry client connection established`, `Successfully
 - `BECKN_ONIX_CLIENT_URL` = `http://onix.statiq-dev:8080/bpp/caller`   (in-cluster; the service port stays 8080)
 - `BECKN_BPP_URI`         = `https://beckn-onix-dev.evlinq.in/bpp/receiver`
 
+## Using the existing dev Redis (ElastiCache) instead of k8s/redis.yaml
+
+The v0.9.5 cache plugin supports `addr`, `use_tls` and a password via `REDIS_PASSWORD` -- no ACL username.
+So ElastiCache works with a classic AUTH token (TLS on or off); an ACL-user setup does not.
+
+```bash
+export REDIS_ADDR=<elasticache-endpoint>:6379
+export REDIS_USE_TLS=true          # if in-transit encryption is on
+./render-config.sh
+kubectl -n statiq-dev create secret generic onix-redis --from-literal=password='<AUTH token>'
+# skip k8s/redis.yaml
+```
+
 ## Rotating keys or changing routing
 
 Repeat steps 1-2, then `kubectl -n statiq-dev rollout restart deployment/onix`. The env-driven `SECRET_ID` loader of our
