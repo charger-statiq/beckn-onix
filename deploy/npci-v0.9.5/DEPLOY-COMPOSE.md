@@ -13,27 +13,6 @@ Three containers come up:
 | `redis-onix-bpp` | Redis, mandatory (no Redis, no boot) | internal only |
 | `otel-collector-bpp` | OpenTelemetry collector | internal only |
 
-## 0. Before you start
-
-**Docker must be able to reach the internet.** ONIX downloads the beckn schema at boot and
-dies if it cannot. Check it:
-
-```bash
-docker run --rm alpine sh -c 'nslookup raw.githubusercontent.com && echo DNS-OK'
-```
-
-If that times out, check IP forwarding on the host:
-
-```bash
-cat /proc/sys/net/ipv4/ip_forward     # must be 1
-sudo sysctl -w net.ipv4.ip_forward=1  # fix for now
-```
-
-To make it stick, uncomment `net.ipv4.ip_forward=1` in `/etc/sysctl.conf`. A VPN client can
-switch this back off, so check again after connecting to a VPN.
-
-**Port 8002 must be free** on the host.
-
 ## 1. Get the two private keys
 
 They live in AWS Secrets Manager under `dev/beckn-onix`:
@@ -150,8 +129,9 @@ healthcheck catches this now, but always read the logs:
 docker compose logs onix-bpp-plugin | grep '"level":"fatal"'
 ```
 
-**`failed to load OpenAPI document ... i/o timeout`** — the container has no internet. Go back
-to step 0.
+**`failed to load OpenAPI document ... i/o timeout`** — the container cannot reach the internet.
+ONIX downloads the beckn schema at boot, so Docker needs outbound access to
+`raw.githubusercontent.com`.
 
 **`render-config.sh` says `set ONIX_SIGNING_PRIVATE_KEY`** — the exports from step 1 are gone.
 They only last for the current shell.
