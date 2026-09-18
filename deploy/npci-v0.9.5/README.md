@@ -27,10 +27,12 @@ literal in the file it reads. `render-config.sh` fills the tokens from the envir
 export ONIX_SIGNING_PRIVATE_KEY=...   # raw 32-byte base64, AWS SM dev/beckn-onix
 export ONIX_ENCR_PRIVATE_KEY=...
 export REDIS_ADDR=redis-onix-bpp:6379              # default
-export HUB_OCPI_BECKN_URL=http://hub-ocpi.statiq-dev:5000/beckn   # default
+export HUB_OCPI_BECKN_URL=https://dev.roaming.evlinq.in/beckn   # default
 ./render-config.sh
 docker compose up -d          # redis + onix v0.9.5 (:8002) + otel collector, same as NPCI's compose
 ```
+
+Full step-by-step for the compose route, including checks and common problems, is in [`DEPLOY-COMPOSE.md`](DEPLOY-COMPOSE.md).
 
 ## Runtime facts (verified 2026-09-17)
 

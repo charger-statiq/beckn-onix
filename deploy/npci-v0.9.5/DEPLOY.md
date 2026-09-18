@@ -22,7 +22,7 @@ docker push 871045590444.dkr.ecr.ap-south-1.amazonaws.com/onix-npci:v0.9.5
 cd deploy/npci-v0.9.5
 export ONIX_SIGNING_PRIVATE_KEY=$(aws secretsmanager get-secret-value --secret-id dev/beckn-onix --query SecretString --output text | jq -r .ONIX_SIGNING_PRIVATE_KEY)
 export ONIX_ENCR_PRIVATE_KEY=$(aws secretsmanager get-secret-value --secret-id dev/beckn-onix --query SecretString --output text | jq -r .ONIX_ENCR_PRIVATE_KEY)
-export HUB_OCPI_BECKN_URL=http://hub-ocpi.statiq-dev:5000/beckn      # in-cluster Hub-OCPI
+export HUB_OCPI_BECKN_URL=https://dev.roaming.evlinq.in/beckn        # public Hub-OCPI
 export REDIS_ADDR=redis-onix-bpp:6379                                 # default, matches k8s/redis.yaml
 ./render-config.sh
 ```

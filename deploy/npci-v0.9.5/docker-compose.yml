@@ -1,15 +1,14 @@
 # Statiq BPP ONIX on NPCI's prebuilt image -- same services, image and mounts as
 # bhim/ubc-ev-sandbox/onix-adaptor/docker-compose-onix-bpp-plugin.yml (commit f705bf2),
 # with our rendered config mounted instead of theirs. Run ./render-config.sh first.
-version: '3.8'
 
 services:
   redis-onix-bpp:
     image: redis:alpine
     container_name: redis-onix-bpp
-    command: redis-server --requirepass your-redis-password
+    command: redis-server --requirepass UsZEXSDkj6gKyx1R
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "your-redis-password", "ping"]
+      test: ["CMD", "redis-cli", "-a", "UsZEXSDkj6gKyx1R", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -24,9 +23,17 @@ services:
       - ./.rendered:/app/config
     environment:
       - CONFIG_FILE=/app/config/adapter.yaml
-      - REDIS_PASSWORD=your-redis-password
+      - REDIS_PASSWORD=UsZEXSDkj6gKyx1R
       - OTEL_EXPORTER_OTLP_INSECURE=true
       - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector-bpp:4317
+    # The image has no curl/wget/nc, so the probe uses bash's /dev/tcp.
+    # Without this a crash loop still shows as "Up" in `docker compose ps`.
+    healthcheck:
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/127.0.0.1/8002 && printf "GET /health HTTP/1.0\r\n\r\n" >&3 && grep -q "\"status\":\"ok\"" <&3']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
     restart: unless-stopped
     depends_on:
       redis-onix-bpp:
@@ -35,7 +42,8 @@ services:
         condition: service_started
 
   otel-collector-bpp:
-    image: otel/opentelemetry-collector-contrib:latest
+    # Pinned: `latest` can change the OTTL syntax otel-config.yml relies on.
+    image: otel/opentelemetry-collector-contrib:0.161.0
     container_name: otel-collector-bpp
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:

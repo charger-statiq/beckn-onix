@@ -6,7 +6,8 @@ with our own config. Nothing here is built; the image is pulled and the config i
 Everything lives in [`deploy/npci-v0.9.5/`](deploy/npci-v0.9.5/):
 
 - `README.md` there: what the config is, how it differs from NPCI's, runtime facts about the image
-- `DEPLOY.md` there: the devops runbook for `statiq-dev`
+- `DEPLOY.md` there: the devops runbook for `statiq-dev` (Kubernetes)
+- `DEPLOY-COMPOSE.md` there: the same thing on one machine with Docker Compose
 
 Upstream for the config: https://github.com/bhim/ubc-ev-sandbox, folder `onix-adaptor/`, commit `f705bf2`.
 
