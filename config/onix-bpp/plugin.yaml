@@ -1,9 +1,0 @@
-plugins:
-  - gcpAuthMdw
-  - nopsigner
-  - router
-  - publisher
-  - reqpreprocessor
-  - reqmapper
-  - nopschemavalidator
-  - nopsignvalidator
