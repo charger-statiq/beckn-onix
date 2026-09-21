@@ -1,8 +1,35 @@
 # Statiq BPP ONIX on NPCI's prebuilt image -- same services, image and mounts as
 # bhim/ubc-ev-sandbox/onix-adaptor/docker-compose-onix-bpp-plugin.yml (commit f705bf2),
-# with our rendered config mounted instead of theirs. Run ./render-config.sh first.
+# with our rendered config mounted instead of theirs.
+#
+# onix-config-init renders that config on every `up`: it reads the two private keys from
+# AWS Secrets Manager and runs render-config.sh, so rotating the secret needs only
+#   docker compose up -d --force-recreate onix-config-init onix-bpp-plugin
+# The host needs AWS access to the secret: an instance role, or keys in a .env file here.
 
 services:
+  onix-config-init:
+    # Pinned: the script relies on bash + jq being in the image.
+    image: amazon/aws-cli:2.36.49
+    container_name: onix-config-init
+    entrypoint: ["/bin/bash", "/work/fetch-and-render.sh"]
+    working_dir: /work
+    volumes:
+      - ./:/work
+    environment:
+      - AWS_REGION=${AWS_REGION:-ap-south-1}
+      - ONIX_SECRET_ID=${ONIX_SECRET_ID:-dev/beckn-onix}
+      # Optional: only when the host has no instance role. Read from .env (gitignored).
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      # render-config.sh knobs, all optional
+      - REDIS_ADDR=${REDIS_ADDR:-redis-onix-bpp:6379}
+      - REDIS_USE_TLS=${REDIS_USE_TLS:-false}
+      - HUB_OCPI_BECKN_URL=${HUB_OCPI_BECKN_URL:-https://dev.roaming.evlinq.in/beckn}
+      - CDS_PUBLISH_BASE_URL=${CDS_PUBLISH_BASE_URL:-http://uat-cds.ubc.nbsl.org.in}
+    restart: "no"
+
   redis-onix-bpp:
     image: redis:alpine
     container_name: redis-onix-bpp
@@ -36,6 +63,8 @@ services:
       start_period: 45s
     restart: unless-stopped
     depends_on:
+      onix-config-init:
+        condition: service_completed_successfully
       redis-onix-bpp:
         condition: service_healthy
       otel-collector-bpp:

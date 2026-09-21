@@ -12,3 +12,5 @@ deploy/npci-v0.9.5/.rendered/
 # leftovers of the old local Go build, safe to delete
 .local/
 plugins/
+# optional AWS keys for onix-config-init when the host has no instance role
+deploy/npci-v0.9.5/.env

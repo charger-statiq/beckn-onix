@@ -23,14 +23,17 @@ The v0.9.5 image does not expand `${VAR}` in its config and has no secrets loade
 literal in the file it reads. `render-config.sh` fills the tokens from the environment into `.rendered/`
 (gitignored, mode 600). Treat `.rendered/adapter.yaml` as a secret: in Kubernetes mount it from a Secret, not a ConfigMap.
 
+With compose the render is automatic: the one-shot `onix-config-init` service runs `fetch-and-render.sh`, which
+reads the two keys from AWS Secrets Manager (`ONIX_SECRET_ID`, default `dev/beckn-onix`) and calls `render-config.sh`
+before ONIX starts. The host only needs AWS access to that secret.
+
 ```bash
-export ONIX_SIGNING_PRIVATE_KEY=...   # raw 32-byte base64, AWS SM dev/beckn-onix
-export ONIX_ENCR_PRIVATE_KEY=...
-export REDIS_ADDR=redis-onix-bpp:6379              # default
-export HUB_OCPI_BECKN_URL=https://dev.roaming.evlinq.in/beckn   # default
-./render-config.sh
-docker compose up -d          # redis + onix v0.9.5 (:8002) + otel collector, same as NPCI's compose
+docker compose up -d          # init renders, then redis + onix v0.9.5 (:8002) + otel collector, same as NPCI's compose
+docker compose up -d --force-recreate onix-config-init onix-bpp-plugin   # after rotating the secret
 ```
+
+Without AWS access on the host, render by hand first (`export ONIX_SIGNING_PRIVATE_KEY=... ONIX_ENCR_PRIVATE_KEY=...`,
+`./render-config.sh`) and start ONIX with `--no-deps`.
 
 Full step-by-step for the compose route, including checks and common problems, is in [`DEPLOY-COMPOSE.md`](DEPLOY-COMPOSE.md).
 
