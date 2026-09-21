@@ -16,4 +16,5 @@ routingRules:
       - confirm
       - update
       - track
+      - cancel
       - on_catalog_publish

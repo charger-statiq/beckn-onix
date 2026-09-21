@@ -15,6 +15,7 @@ routingRules:
       - on_status
       - on_track
       - on_update
+      - on_cancel
 
   - domain: beckn.one:deg:ev-charging
     version: "2.0.0"
