@@ -1,0 +1,37 @@
+version: 0.0
+os: linux
+
+# No build stage: the pipeline hands the repo (source artifact) straight to CodeDeploy.
+# Nothing is built -- ONIX is NPCI's prebuilt image, and onix-config-init renders the
+# config from Secrets Manager on every `up`. Stack lives in /opt/beckn-onix/deploy/npci-v0.9.5.
+files:
+  - source: /
+    destination: /opt/beckn-onix
+
+# The host keeps files CodeDeploy didn't ship (.rendered/, optional .env). Overwrite instead
+# of failing if a file is already there (e.g. first deploy over a manual copy).
+file_exists_behavior: OVERWRITE
+
+permissions:
+  - object: /opt/beckn-onix
+    pattern: "**"
+    owner: root
+    group: root
+
+hooks:
+  ApplicationStop:
+    - location: scripts/application_stop.sh     # compose down (previous revision's copy)
+      timeout: 120
+      runas: root
+  AfterInstall:
+    - location: scripts/after_install.sh        # chmod + compose pull
+      timeout: 600
+      runas: root
+  ApplicationStart:
+    - location: scripts/application_start.sh    # clear stale containers + compose up -d
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: scripts/validate_service.sh     # fail the deploy if ONIX isn't healthy
+      timeout: 300
+      runas: root

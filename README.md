@@ -14,3 +14,13 @@ Upstream for the config: https://github.com/bhim/ubc-ev-sandbox, folder `onix-ad
 This repo began as a fork of `beckn-one/beckn-onix` with our own Go build (secrets loader, Dockerfile).
 That code was removed on 2026-09-18 and is still in history at `c7e5cc1` if current ONIX ever becomes usable
 for UBC traffic again.
+
+## CI/CD (AWS CodePipeline -> CodeDeploy)
+
+Pipeline is Source -> Deploy, no build stage (nothing is built). CodeDeploy copies the repo to
+`/opt/beckn-onix` on the host and runs the hooks in [`scripts/`](scripts/) per [`appspec.yml`](appspec.yml):
+`docker compose down` -> `pull` -> `up -d` in `deploy/npci-v0.9.5`, then waits for `onix-bpp-plugin` to be healthy.
+
+Host needs: CodeDeploy agent, an instance role with `secretsmanager:GetSecretValue` on `dev/beckn-onix`
+(IMDSv2 hop limit 2 so containers can use it), and outbound access to Docker Hub and raw.githubusercontent.com.
+Don't also run compose by hand from another clone: the container names are fixed and will collide.
