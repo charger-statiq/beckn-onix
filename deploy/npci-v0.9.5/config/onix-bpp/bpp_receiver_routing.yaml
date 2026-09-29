@@ -18,4 +18,5 @@ routingRules:
       - track
       - cancel
       - status
+      - rating
       - on_catalog_publish
