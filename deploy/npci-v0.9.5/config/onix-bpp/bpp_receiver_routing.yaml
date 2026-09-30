@@ -1,7 +1,7 @@
 # ONIX BPP Receiver Routing -- INBOUND: BHIM -> ONIX -> Hub-OCPI
 # Same shape as NPCI's onix-adaptor/config/onix-bpp/bpp_receiver_routing.yaml; only the target and the action list differ.
 # ONIX appends the action to the url, so `select` lands on {url}/select = Hub-OCPI's /beckn/select.
-# Only actions Hub-OCPI implements are listed; add rating/support with their handlers.
+# Only actions Hub-OCPI implements are listed; each new action needs its hub handler too.
 
 routingRules:
   - domain: beckn.one:deg:ev-charging
@@ -19,4 +19,5 @@ routingRules:
       - cancel
       - status
       - rating
+      - support
       - on_catalog_publish
