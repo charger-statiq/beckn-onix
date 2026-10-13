@@ -2,8 +2,9 @@
 # bhim/ubc-ev-sandbox/onix-adaptor/docker-compose-onix-bpp-plugin.yml (commit f705bf2),
 # with our rendered config mounted instead of theirs.
 #
-# onix-config-init renders that config on every `up`: it reads the two private keys from
-# AWS Secrets Manager and runs render-config.sh, so rotating the secret needs only
+# onix-config-init renders that config on every `up`: it reads the <env>/beckn-onix secret
+# (private keys + the per-environment identity and URLs) and runs render-config.sh, so a
+# changed secret needs only
 #   docker compose up -d --force-recreate onix-config-init onix-bpp-plugin
 # The host needs AWS access to the secret: an instance role, or keys in a .env file here.
 
@@ -26,8 +27,13 @@ services:
       # render-config.sh knobs, all optional
       - REDIS_ADDR=${REDIS_ADDR:-redis-onix-bpp:6379}
       - REDIS_USE_TLS=${REDIS_USE_TLS:-false}
-      - HUB_OCPI_BECKN_URL=${HUB_OCPI_BECKN_URL:-https://dev.roaming.evlinq.in/beckn}
-      - CDS_PUBLISH_BASE_URL=${CDS_PUBLISH_BASE_URL:-http://uat-cds.ubc.nbsl.org.in}
+      # Per-environment values. Empty here means "take it from the secret"; a value in .env wins over the secret.
+      - HUB_OCPI_BECKN_URL=${HUB_OCPI_BECKN_URL:-}
+      - CDS_PUBLISH_BASE_URL=${CDS_PUBLISH_BASE_URL:-}
+      - ONIX_SUBSCRIBER_ID=${ONIX_SUBSCRIBER_ID:-}
+      - ONIX_KEY_ID=${ONIX_KEY_ID:-}
+      - ONIX_SIGNING_PUBLIC_KEY=${ONIX_SIGNING_PUBLIC_KEY:-}
+      - ONIX_ENCR_PUBLIC_KEY=${ONIX_ENCR_PUBLIC_KEY:-}
     restart: "no"
 
   redis-onix-bpp:

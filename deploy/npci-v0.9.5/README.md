@@ -12,7 +12,7 @@ files, audit-fields.yaml). This folder is that config with our values, and a com
 
 | file | change |
 |---|---|
-| `adapter.yaml.tmpl` | `appName`; `subscriberId` / `networkParticipant` -> `cert-statiq.evlinq.in`; `keyId` -> our DeDi record id; public keys -> ours; private keys -> `__ONIX_*_PRIVATE_KEY__` tokens; registry -> their own commented `dediregistry` block, url `https://fabric.nfh.global/registry/dedi`; redis addr -> `__REDIS_ADDR__` |
+| `adapter.yaml.tmpl` | `appName`; `subscriberId` / `networkParticipant` -> `__ONIX_SUBSCRIBER_ID__`; `keyId` -> `__ONIX_KEY_ID__`; public keys -> `__ONIX_*_PUBLIC_KEY__`; private keys -> `__ONIX_*_PRIVATE_KEY__` tokens; registry -> their own commented `dediregistry` block, url `https://fabric.nfh.global/registry/dedi`; redis addr -> `__REDIS_ADDR__` |
 | `bpp_receiver_routing.yaml` | target -> Hub-OCPI (`__HUB_OCPI_BECKN_URL__`); only the actions Hub-OCPI implements |
 | `bpp_caller_routing.yaml` | `on_*` -> `bap` (as theirs, minus on_discover -> mock CDS); `catalog_publish` -> CDS url rule (`__CDS_PUBLISH_BASE_URL__`) |
 | `audit-fields.yaml` | unchanged |
@@ -24,8 +24,24 @@ literal in the file it reads. `render-config.sh` fills the tokens from the envir
 (gitignored, mode 600). Treat `.rendered/adapter.yaml` as a secret: in Kubernetes mount it from a Secret, not a ConfigMap.
 
 With compose the render is automatic: the one-shot `onix-config-init` service runs `fetch-and-render.sh`, which
-reads the two keys from AWS Secrets Manager (`ONIX_SECRET_ID`, default `dev/beckn-onix`) and calls `render-config.sh`
-before ONIX starts. The host only needs AWS access to that secret.
+reads the `<env>/beckn-onix` secret from AWS Secrets Manager (`ONIX_SECRET_ID`, default `dev/beckn-onix`) and calls
+`render-config.sh` before ONIX starts. The host only needs AWS access to that secret.
+
+## One secret per environment
+
+Everything that differs between dev, SIT and prod lives in that secret, so a host needs nothing but `ONIX_SECRET_ID`:
+
+| key | required | what |
+|---|---|---|
+| `ONIX_SIGNING_PRIVATE_KEY`, `ONIX_ENCR_PRIVATE_KEY` | yes | raw 32-byte base64 seeds |
+| `ONIX_SUBSCRIBER_ID` | no (default dev) | our `subscriber_id` in the DeDi record = `bpp_id` on the wire |
+| `ONIX_KEY_ID` | no (default dev) | the DeDi `record_id` = the keyId in every signature |
+| `ONIX_SIGNING_PUBLIC_KEY`, `ONIX_ENCR_PUBLIC_KEY` | no (default dev) | public halves, must equal the record for `ONIX_KEY_ID` |
+| `HUB_OCPI_BECKN_URL` | no (default dev hub) | where inbound actions are forwarded |
+| `CDS_PUBLISH_BASE_URL` | no (default UAT CDS host) | base of the `catalog_publish` rule; ONIX appends `/catalog_publish` |
+
+Precedence: a non-empty value in the host env or `.env` > the secret > the dev default in `render-config.sh`.
+The `.env` route is for one-off experiments; a value that must survive a re-render belongs in the secret.
 
 ```bash
 docker compose up -d          # init renders, then redis + onix v0.9.5 (:8002) + otel collector, same as NPCI's compose

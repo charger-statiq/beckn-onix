@@ -16,9 +16,10 @@ Four containers come up:
 
 ## 1. Give the host access to the secret
 
-The private keys live in AWS Secrets Manager under `dev/beckn-onix` (override with
-`ONIX_SECRET_ID`). `onix-config-init` reads them on every start, so the host needs permission to
-call `secretsmanager:GetSecretValue` on that one secret. Either:
+The private keys and the per-environment identity live in AWS Secrets Manager under
+`<env>/beckn-onix` (`ONIX_SECRET_ID`, default `dev/beckn-onix`; the key list is in
+[`README.md`](README.md#one-secret-per-environment)). `onix-config-init` reads it on every start, so the
+host needs permission to call `secretsmanager:GetSecretValue` on that one secret. Either:
 
 - **Instance role** (preferred). Attach a role with that permission to the VM. If the instance
   uses IMDSv2, set its hop limit to 2, otherwise containers on the bridge network cannot reach
@@ -50,8 +51,12 @@ Overrides, all optional, exported before `up` or put in `.env`:
 | `AWS_REGION` | `ap-south-1` |
 | `REDIS_ADDR` | `redis-onix-bpp:6379` (the compose Redis) |
 | `REDIS_USE_TLS` | `false` |
-| `HUB_OCPI_BECKN_URL` | `https://dev.roaming.evlinq.in/beckn` |
-| `CDS_PUBLISH_BASE_URL` | `http://uat-cds.ubc.nbsl.org.in` |
+| `HUB_OCPI_BECKN_URL` | from the secret, else `https://dev.roaming.evlinq.in/beckn` |
+| `CDS_PUBLISH_BASE_URL` | from the secret, else `http://uat-cds.ubc.nbsl.org.in` |
+| `ONIX_SUBSCRIBER_ID`, `ONIX_KEY_ID`, `ONIX_*_PUBLIC_KEY` | from the secret, else the dev record |
+
+Prefer the secret for anything environment-specific: an export is lost on the next re-render in
+a fresh shell, the secret is not.
 
 ## 3. After rotating the keys
 
@@ -68,7 +73,7 @@ ONIX would boot on the old file.
 To check what ONIX is actually signing with, without printing the key:
 
 ```bash
-docker compose logs onix-config-init | tail -2                     # should say rendered -> ...
+docker compose logs onix-config-init | tail -3                     # identity: subscriber=... keyId=... then rendered -> ...
 sudo grep signingPrivateKey .rendered/adapter.yaml | awk '{print $2}' | sort -u | wc -l   # 1
 ```
 
@@ -114,7 +119,7 @@ You want all four:
 ```
 Cache connection to Redis established successfully
 DeDi Registry client connection established successfully
-Successfully loaded keyset from configuration with keyID: 76EU8q...
+Successfully loaded keyset from configuration with keyID: <ONIX_KEY_ID of this environment>
 Processor steps initialized: [validateSign addRoute validateSchema]
 Processor steps initialized: [validateSchema addRoute sign]
 ```

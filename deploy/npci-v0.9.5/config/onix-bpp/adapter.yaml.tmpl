@@ -50,7 +50,7 @@ modules:
     handler:
       type: std
       role: bpp
-      subscriberId: cert-statiq.evlinq.in
+      subscriberId: __ONIX_SUBSCRIBER_ID__
       httpClientConfig:
         maxIdleConns: 1000
         maxIdleConnsPerHost: 200
@@ -68,12 +68,12 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-            networkParticipant: cert-statiq.evlinq.in
-            keyId: 76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX
+            networkParticipant: __ONIX_SUBSCRIBER_ID__
+            keyId: __ONIX_KEY_ID__
             signingPrivateKey: __ONIX_SIGNING_PRIVATE_KEY__
-            signingPublicKey: d1n58ic3+qi2mvw5r/4tlf2F+bI2ajfluOxVdtf6J2Y=
+            signingPublicKey: __ONIX_SIGNING_PUBLIC_KEY__
             encrPrivateKey: __ONIX_ENCR_PRIVATE_KEY__
-            encrPublicKey: kvL8Go5zSKd9MaMvMVJn7zzYEF/AZHQGSxk6qVqoFl0=
+            encrPublicKey: __ONIX_ENCR_PUBLIC_KEY__
         cache:
           id: cache
           config:
@@ -114,7 +114,7 @@ modules:
     handler:
       type: std
       role: bpp
-      subscriberId: cert-statiq.evlinq.in
+      subscriberId: __ONIX_SUBSCRIBER_ID__
       httpClientConfig:
         maxIdleConns: 1000
         maxIdleConnsPerHost: 200
@@ -132,12 +132,12 @@ modules:
         keyManager:
           id: simplekeymanager
           config:
-            networkParticipant: cert-statiq.evlinq.in
-            keyId: 76EU8qiBwfUBmq3RN18KXQt5DsqEumw2hbFK4RuqpaKfvdb2RiQnnX
+            networkParticipant: __ONIX_SUBSCRIBER_ID__
+            keyId: __ONIX_KEY_ID__
             signingPrivateKey: __ONIX_SIGNING_PRIVATE_KEY__
-            signingPublicKey: d1n58ic3+qi2mvw5r/4tlf2F+bI2ajfluOxVdtf6J2Y=
+            signingPublicKey: __ONIX_SIGNING_PUBLIC_KEY__
             encrPrivateKey: __ONIX_ENCR_PRIVATE_KEY__
-            encrPublicKey: kvL8Go5zSKd9MaMvMVJn7zzYEF/AZHQGSxk6qVqoFl0=
+            encrPublicKey: __ONIX_ENCR_PUBLIC_KEY__
         cache:
           id: cache
           config:
